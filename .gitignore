@@ -1,0 +1,13 @@
+# secrets — never commit
+.env
+.env.*
+!.env.example
+
+.venv/
+__pycache__/
+data/
+models/
+bin/
+chroma/
+# keep per-query scores/candidates/usage (reproducible results without re-paying APIs); drop logs
+results/cache/*.log
