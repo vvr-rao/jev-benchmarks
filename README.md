@@ -1,4 +1,4 @@
-# Reranker benchmark: BEIR SciFact
+# JEV-Benchmarks
 
 Compares JEV (TypeSafe `jev-latest`), Cohere Rerank 4 Pro (`rerank-v4.0-pro`), and
 Qwen3-Reranker 0.6B / 8B (hosted on DeepInfra) on the BEIR SciFact test split (300 queries)
