@@ -18,7 +18,10 @@ from bench.rerankers.base import Reranker, api_key, post_json
 URL = "https://api.typesafe.ai/v1/systemone"
 MODEL = "jev-latest"
 MAX_DOCS = 30
-MAX_STATE_CHARS = 100_000  # ~32k-token request budget, with headroom
+# ~32k-token request budget (state + questions), with headroom. Source: the hev-rerank wrapper
+# (github.com/hev/jev-rerank, same value and rationale) and Hindsight's "Adding Jev as a
+# reranker" post (hindsight.vectorize.io, 2026-09-24) -- not confirmed in TypeSafe's own docs.
+MAX_STATE_CHARS = 100_000
 PROMPTS = {
     "generic-1": {
         "question": "Document `documents.{id}` is relevant to `query`: it contains information that answers or directly addresses it.",
