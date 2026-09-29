@@ -8,14 +8,14 @@ from bench.rerankers.base import Reranker, api_key, post_json
 
 URL = "https://api.cohere.com/v2/rerank"
 MODEL = "rerank-v4.0-pro"
-# Trial keys allow ~10 rerank calls/min; pace client-side instead of burning retries on 429s.
-# Set COHERE_MIN_INTERVAL_S=0 in .env for a production key.
-MIN_INTERVAL_S = float(os.environ.get("COHERE_MIN_INTERVAL_S", "6.5"))
+# Production keys: no pacing. For a trial key (~10 rerank calls/min) set COHERE_MIN_INTERVAL_S=6.5
+# and COHERE_CONCURRENCY=1 in .env to pace client-side instead of burning retries on 429s.
+MIN_INTERVAL_S = float(os.environ.get("COHERE_MIN_INTERVAL_S", "0"))
 
 
 class Cohere(Reranker):
     name = "cohere"
-    concurrency = 1
+    concurrency = int(os.environ.get("COHERE_CONCURRENCY", "4"))
 
     def __init__(self):
         super().__init__()
@@ -25,10 +25,11 @@ class Cohere(Reranker):
         self._last_call = 0.0
 
     def score(self, query, docs):
-        wait = self._last_call + MIN_INTERVAL_S - time.monotonic()
-        if wait > 0:
-            time.sleep(wait)
-        self._last_call = time.monotonic()
+        if MIN_INTERVAL_S > 0:
+            wait = self._last_call + MIN_INTERVAL_S - time.monotonic()
+            if wait > 0:
+                time.sleep(wait)
+            self._last_call = time.monotonic()
         r, secs, retries = post_json(self.client, URL, {"model": MODEL, "query": query, "documents": docs, "top_n": len(docs)}, retries=15)
         bu = r.get("meta", {}).get("billed_units", {})
         self.add_usage(calls=1, search_units=bu.get("search_units"))

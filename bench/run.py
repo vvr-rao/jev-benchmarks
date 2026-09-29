@@ -2,7 +2,7 @@
 
   uv run python -m bench.run --limit 10                 # subset run
   uv run python -m bench.run                            # all 300 test queries
-  uv run python -m bench.run --rerankers jev,cohere
+  uv run python -m bench.run --rerankers jev@scifact-v1,cohere
 
 Scores are cached per query in results/cache/<reranker>.jsonl, so reruns resume
 and never pay twice for the same query.
@@ -26,9 +26,12 @@ RESULTS = ROOT / "results"
 
 
 def get_reranker(name):
-    if name == "jev":
+    """Names: jev | jev@<prompt-version> | cohere | qwen | qwen8b. The name is also the cache file stem."""
+    if name == "jev" or name.startswith("jev@"):
         from bench.rerankers.jev import Jev
-        return Jev()
+        rr = Jev(name.partition("@")[2] or "generic-1")
+        rr.name = name
+        return rr
     if name == "cohere":
         from bench.rerankers.cohere import Cohere
         return Cohere()
@@ -86,9 +89,35 @@ def run_reranker(name, qids, queries, corpus, cands, cache_dir: Path = CACHE):
             usage[k] = usage.get(k, 0) + v
         if getattr(rr, "model_version", None):
             usage["model_version"] = rr.model_version
+        if getattr(rr, "prompt_version", None):
+            usage["prompt_version"] = rr.prompt_version
         usage_path.write_text(json.dumps(usage, indent=2))
         print(f"{name}: this session usage {rr.usage}")
     return {q: cache[q] for q in qids}
+
+
+def probe_latency(name, qids, queries, corpus, cands, cache_dir: Path = CACHE, n: int = 50) -> dict:
+    """Latency measured one request at a time on the first n queries (scores are discarded).
+
+    Scoring runs with several requests in flight for throughput; on this 2-core machine that
+    inflates per-call timings, so reported latency comes from this sequential probe instead.
+    Cached in <cache_dir>/<name>.latency.json.
+    """
+    path = cache_dir / f"{name}.latency.json"
+    probe_q = qids[:n]
+    if path.exists():
+        cached = json.loads(path.read_text())
+        if cached["qids"] == probe_q:
+            return cached["summary"]
+    rr = get_reranker(name)
+    lats = []
+    for q in tqdm(probe_q, desc=f"{name} latency probe"):
+        _, api_s, _ = rr.score(queries[q], [corpus[d] for d in cands[q]])
+        lats.append(api_s)
+    lats.sort()
+    summary = {"p50_s": lats[len(lats) // 2], "p95_s": lats[max(0, int(len(lats) * 0.95) - 1)], "n": len(lats)}
+    path.write_text(json.dumps({"qids": probe_q, "latencies_s": lats, "summary": summary, "usage": rr.usage}, indent=2))
+    return summary
 
 
 def tie_break_by_first_stage(scores: dict[str, float], first_stage: dict[str, float]) -> dict[str, float]:
@@ -115,9 +144,10 @@ def sanity(name, recs, qrels):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--rerankers", default="jev,cohere,qwen")
+    ap.add_argument("--rerankers", default="jev@scifact-v1,cohere,qwen,qwen8b")
     ap.add_argument("--limit", type=int, default=None, help="first N test queries (subset run)")
     ap.add_argument("--depth", type=int, default=100)
+    ap.add_argument("--latency-probe", type=int, default=50, help="sequential latency probe size (0 = skip)")
     args = ap.parse_args()
 
     corpus, queries, qrels = load()
@@ -132,10 +162,8 @@ def main():
     for name in [n.strip() for n in args.rerankers.split(",") if n.strip()]:
         recs = run_reranker(name, qids, queries, corpus, cands)
         runs[name] = {q: tie_break_by_first_stage(r["scores"], cands[q]) for q, r in recs.items()}
-        # API time of the successful call(s) only; records without it are left out (see README)
-        lats = sorted(r["api_latency_s"] for r in recs.values() if "api_latency_s" in r)
-        if lats:
-            latency[name] = {"p50_s": lats[len(lats) // 2], "p95_s": lats[max(0, int(len(lats) * 0.95) - 1)], "n": len(lats)}
+        if args.latency_probe:
+            latency[name] = probe_latency(name, qids, queries, corpus, cands, n=args.latency_probe)
         sanity_rows[name] = sanity(name, recs, qrels)
 
     table = {name: evaluate(qrels, run) for name, run in runs.items()}
@@ -143,7 +171,7 @@ def main():
     lines = [
         f"## BEIR SciFact test — {len(qids)} queries, rerank depth {args.depth}",
         "",
-        "| system | " + " | ".join(metrics) + " | p50 API latency/query |",
+        "| system | " + " | ".join(metrics) + " | p50 API latency (sequential) |",
         "|---|" + "---:|" * (len(metrics) + 1),
     ]
     for name, m in table.items():

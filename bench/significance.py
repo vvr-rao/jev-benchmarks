@@ -13,7 +13,10 @@ from bench.metrics import ndcg_at_k, recall_at_k
 from bench.retrieve import candidates
 from bench.run import CACHE, RESULTS, load_cache, tie_break_by_first_stage
 
-RERANKERS = ("jev", "cohere", "qwen8b", "qwen")
+RERANKERS = {
+    "scifact": ("jev@scifact-v1", "cohere", "qwen8b", "qwen"),
+    "hotpotqa": ("jev@hotpotqa-v1", "cohere", "qwen8b", "qwen"),
+}
 METRICS = (("nDCG@10", ndcg_at_k, 10), ("Recall@1", recall_at_k, 1), ("Recall@5", recall_at_k, 5))
 B = 10_000
 
@@ -26,10 +29,10 @@ def scifact():
     return qids, qrels, cands, CACHE, RESULTS, metrics
 
 
-def hotpotqa():
+def hotpotqa(full=False):
     from bench import hotpot
 
-    queries, corpus, qrels, _ = hotpot.load_sample()
+    queries, corpus, qrels, _ = hotpot.load_sample(None if full else hotpot.SAMPLE)
     cands = hotpot.bm25(queries, corpus)
     metrics = [(m, hotpot.METRICS[m]) for m in ("nDCG@10", "Recall@2", "Both@2")]
     return list(queries), qrels, cands, hotpot.CACHE, hotpot.OUT, metrics
@@ -38,15 +41,21 @@ def hotpotqa():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", choices=("scifact", "hotpotqa"), default="scifact")
-    qids, qrels, cands, cache_dir, out_dir, metrics = {"scifact": scifact, "hotpotqa": hotpotqa}[ap.parse_args().dataset]()
+    ap.add_argument("--full", action="store_true", help="hotpotqa: all 7,405 dev questions")
+    args = ap.parse_args()
+    if args.dataset == "hotpotqa":
+        qids, qrels, cands, cache_dir, out_dir, metrics = hotpotqa(args.full)
+    else:
+        qids, qrels, cands, cache_dir, out_dir, metrics = scifact()
+    rerankers = RERANKERS[args.dataset]
     per = {}
-    for n in RERANKERS:
+    for n in rerankers:
         cache = load_cache(cache_dir / f"{n}.jsonl")
         per[n] = {q: tie_break_by_first_stage(cache[q]["scores"], cands[q]) for q in qids}
 
     rng = random.Random(0)
     rows = []
-    for a, b in itertools.combinations(RERANKERS, 2):
+    for a, b in itertools.combinations(rerankers, 2):
         for label, f in metrics:
             d = [f(qrels[q], per[a][q]) - f(qrels[q], per[b][q]) for q in qids]
             mean = sum(d) / len(d)

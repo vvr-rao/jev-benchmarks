@@ -1,0 +1,7 @@
+{
+  "calls": 7405,
+  "input_tokens": 22196570,
+  "output_tokens": 1356220,
+  "model_version": "jev-1.13.0",
+  "prompt_version": "hotpotqa-v1"
+}
