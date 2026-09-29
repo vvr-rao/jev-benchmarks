@@ -10,4 +10,4 @@ models/
 bin/
 chroma/
 # keep per-query scores/candidates/usage (reproducible results without re-paying APIs); drop logs
-results/cache/*.log
+results/**/*.log

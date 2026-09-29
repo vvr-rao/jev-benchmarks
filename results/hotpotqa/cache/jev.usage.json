@@ -1,0 +1,6 @@
+{
+  "calls": 500,
+  "input_tokens": 1307708,
+  "output_tokens": 92000,
+  "model_version": "jev-1.13.0"
+}

@@ -1,13 +1,37 @@
 # Reranker benchmark: BEIR SciFact
 
 Compares JEV (TypeSafe `jev-latest`), Cohere Rerank 4 Pro (`rerank-v4.0-pro`), and
-Qwen3-Reranker 0.6B / 8B (hosted on DeepInfra) on the BEIR SciFact test split (300 queries).
+Qwen3-Reranker 0.6B / 8B (hosted on DeepInfra) on the BEIR SciFact test split (300 queries)
+and a 500-question sample of the HotpotQA distractor dev set.
+
+### BEIR SciFact
 
 **Pipeline:** Chroma (local, built-in ONNX all-MiniLM-L6-v2, cosine) retrieves the top 100
 per query → each reranker rescores exactly that list → nDCG@10/100 and Recall@1/3/5/10/20/100.
 
 Results: [`results/summary_n300.md`](results/summary_n300.md),
 significance: [`results/significance_n300.md`](results/significance_n300.md).
+
+### HotpotQA distractor
+
+500 questions sampled (seed 0) from the HotpotQA **dev distractor** set (7,405 questions). Each
+question comes with 10 paragraphs: 2 gold supporting paragraphs + 8 distractors. No first-stage
+retrieval: each reranker ranks the given 10; BM25 over them is the baseline and tie-breaker.
+**Both@k** = both gold paragraphs in the top k (what multi-hop QA needs).
+
+Results: [`results/hotpotqa/summary_n500.md`](results/hotpotqa/summary_n500.md),
+significance: [`results/hotpotqa/significance_n500.md`](results/hotpotqa/significance_n500.md).
+
+```bash
+uv run python -m bench.hotpot --limit 10                           # subset
+uv run python -m bench.hotpot --rerankers jev,qwen,qwen8b,cohere   # 500-question sample
+uv run python -m bench.significance --dataset hotpotqa
+```
+
+Note: JEV scores all 10 paragraphs within one request (one state, one question per paragraph),
+so it can use the other paragraphs as context; Cohere and Qwen score each (query, paragraph)
+pair independently. This is how each API is designed to be used, and likely explains much of
+JEV's lead on bridge questions.
 
 ## Setup
 

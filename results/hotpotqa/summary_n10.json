@@ -1,0 +1,136 @@
+{
+  "n_questions": 10,
+  "overall": {
+    "bm25 (no rerank)": {
+      "nDCG@10": 0.8054891559899264,
+      "Recall@1": 0.4,
+      "Recall@2": 0.55,
+      "Recall@3": 0.65,
+      "Recall@5": 0.7,
+      "Both@2": 0.2,
+      "Both@3": 0.3,
+      "Both@5": 0.4
+    },
+    "jev": {
+      "nDCG@10": 0.9919720789148186,
+      "Recall@1": 0.5,
+      "Recall@2": 0.95,
+      "Recall@3": 1.0,
+      "Recall@5": 1.0,
+      "Both@2": 0.9,
+      "Both@3": 1.0,
+      "Both@5": 1.0
+    },
+    "qwen": {
+      "nDCG@10": 0.9258318791915741,
+      "Recall@1": 0.5,
+      "Recall@2": 0.7,
+      "Recall@3": 0.85,
+      "Recall@5": 0.9,
+      "Both@2": 0.4,
+      "Both@3": 0.7,
+      "Both@5": 0.8
+    },
+    "qwen8b": {
+      "nDCG@10": 0.9636377682782612,
+      "Recall@1": 0.5,
+      "Recall@2": 0.8,
+      "Recall@3": 0.95,
+      "Recall@5": 1.0,
+      "Both@2": 0.6,
+      "Both@3": 0.9,
+      "Both@5": 1.0
+    }
+  },
+  "by_type": {
+    "bridge": {
+      "bm25 (no rerank)": {
+        "nDCG@10": 0.8162388158372964,
+        "Recall@1": 0.4375,
+        "Recall@2": 0.5625,
+        "Recall@3": 0.625,
+        "Recall@5": 0.6875,
+        "Both@2": 0.25,
+        "Both@3": 0.25,
+        "Both@5": 0.375
+      },
+      "jev": {
+        "nDCG@10": 0.9899650986435234,
+        "Recall@1": 0.5,
+        "Recall@2": 0.9375,
+        "Recall@3": 1.0,
+        "Recall@5": 1.0,
+        "Both@2": 0.875,
+        "Both@3": 1.0,
+        "Both@5": 1.0
+      },
+      "qwen": {
+        "nDCG@10": 0.9072898489894676,
+        "Recall@1": 0.5,
+        "Recall@2": 0.625,
+        "Recall@3": 0.8125,
+        "Recall@5": 0.875,
+        "Both@2": 0.25,
+        "Both@3": 0.625,
+        "Both@5": 0.75
+      },
+      "qwen8b": {
+        "nDCG@10": 0.9545472103478265,
+        "Recall@1": 0.5,
+        "Recall@2": 0.75,
+        "Recall@3": 0.9375,
+        "Recall@5": 1.0,
+        "Both@2": 0.5,
+        "Both@3": 0.875,
+        "Both@5": 1.0
+      }
+    },
+    "comparison": {
+      "bm25 (no rerank)": {
+        "nDCG@10": 0.7624905166004466,
+        "Recall@1": 0.25,
+        "Recall@2": 0.5,
+        "Recall@3": 0.75,
+        "Recall@5": 0.75,
+        "Both@2": 0.0,
+        "Both@3": 0.5,
+        "Both@5": 0.5
+      },
+      "jev": {
+        "nDCG@10": 1.0,
+        "Recall@1": 0.5,
+        "Recall@2": 1.0,
+        "Recall@3": 1.0,
+        "Recall@5": 1.0,
+        "Both@2": 1.0,
+        "Both@3": 1.0,
+        "Both@5": 1.0
+      },
+      "qwen": {
+        "nDCG@10": 1.0,
+        "Recall@1": 0.5,
+        "Recall@2": 1.0,
+        "Recall@3": 1.0,
+        "Recall@5": 1.0,
+        "Both@2": 1.0,
+        "Both@3": 1.0,
+        "Both@5": 1.0
+      },
+      "qwen8b": {
+        "nDCG@10": 1.0,
+        "Recall@1": 0.5,
+        "Recall@2": 1.0,
+        "Recall@3": 1.0,
+        "Recall@5": 1.0,
+        "Both@2": 1.0,
+        "Both@3": 1.0,
+        "Both@5": 1.0
+      }
+    }
+  },
+  "p50_latency_s": {
+    "jev": 0.30269833328202367,
+    "qwen": 0.3009670339524746,
+    "qwen8b": 0.605251332744956
+  }
+}

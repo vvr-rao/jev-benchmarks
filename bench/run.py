@@ -54,8 +54,8 @@ def load_cache(path: Path) -> dict:
     return out
 
 
-def run_reranker(name, qids, queries, corpus, cands):
-    path = CACHE / f"{name}.jsonl"
+def run_reranker(name, qids, queries, corpus, cands, cache_dir: Path = CACHE):
+    path = cache_dir / f"{name}.jsonl"
     cache = load_cache(path)
     todo = [q for q in qids if q not in cache]
     if todo:
@@ -80,7 +80,7 @@ def run_reranker(name, qids, queries, corpus, cands):
                 rec = fut.result()
                 cache[rec["qid"]] = rec
 
-        usage_path = CACHE / f"{name}.usage.json"
+        usage_path = cache_dir / f"{name}.usage.json"
         usage = json.loads(usage_path.read_text()) if usage_path.exists() else {}
         for k, v in rr.usage.items():
             usage[k] = usage.get(k, 0) + v
