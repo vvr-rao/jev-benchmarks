@@ -134,7 +134,7 @@ Caveats:
   it is evaluated on.
 
 Earlier results with `generic-1` (SciFact n=300, HotpotQA n=500) are in git history
-(commit `a1bb667`); `results/hotpotqa/summary_n500.md` and `significance_n500.md` are kept
+(commit `b5c0602`); `results/hotpotqa/summary_n500.md` and `significance_n500.md` are kept
 from that run.
 
 ## Method notes
